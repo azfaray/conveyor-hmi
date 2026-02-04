@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Moon, Sun } from 'lucide-react';
 
 export function Navbar() {
-  const { electricity_status, mqtt_connected } = useSystemStore();
+  const { mqtt_online_status, mqtt_connected } = useSystemStore();
 
   return (
     <nav className="border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
@@ -31,14 +31,14 @@ export function Navbar() {
               {/* MQTT Connection */}
               <MqttStatus is_connected={mqtt_connected} />
 
-              {/* Power Status */}
+              {/* Online Status (Replacing Power Status) */}
               <div className="flex items-center gap-2">
                 <StatusIndicator
-                  status={electricity_status === 'live' ? 'safe' : 'danger'}
+                  status={mqtt_online_status === 2 ? 'safe' : 'inactive'}
                   size="small"
                 />
                 <span className="text-sm font-medium">
-                  {electricity_status === 'live' ? 'Power Live' : 'No Power'}
+                  {mqtt_online_status === 2 ? 'System Online' : 'Offline / Standby'}
                 </span>
               </div>
 

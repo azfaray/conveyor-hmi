@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RelayToggle } from '../diagnostics/relay-toggle';
 import { PlacingPointModifier } from '../diagnostics/placing-points-modifier';
 import { SystemLogs } from '@/components/diagnostics/system-logs';
@@ -10,27 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function DiagnosticsTab() {
-  // 1. Initialize state safely (check localStorage if available)
   const [diagnostics_mode, set_diagnostics_mode] = useState<boolean>(false);
-  const [is_mounted, set_is_mounted] = useState(false);
-
-  // 2. On Mount: Read from localStorage
-  useEffect(() => {
-    set_is_mounted(true); // Prevents hydration mismatch
-    const saved = localStorage.getItem('diagnostics_mode');
-    if (saved) {
-      set_diagnostics_mode(JSON.parse(saved));
-    }
-  }, []);
-
-  // 3. Handler: Update State AND localStorage
-  const handleToggle = (checked: boolean) => {
-    set_diagnostics_mode(checked);
-    localStorage.setItem('diagnostics_mode', JSON.stringify(checked));
-  };
-
-  // Prevent flash of incorrect content during hydration
-  if (!is_mounted) return null; 
 
   return (
     <div className="space-y-6">
@@ -46,7 +26,7 @@ export function DiagnosticsTab() {
           <input
             type="checkbox"
             checked={diagnostics_mode}
-            onChange={(e) => handleToggle(e.target.checked)}
+            onChange={(e) => set_diagnostics_mode(e.target.checked)}
             className="w-4 h-4"
           />
           <span className="font-medium">Enable Diagnostics Mode (Unsafe!)</span>

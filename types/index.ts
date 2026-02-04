@@ -9,8 +9,15 @@ export interface MqttConnectionState {
 }
 
 // Placing Point Types
+// Placing Point Types
 export type OuterPlacingPointState = 'non-occupied' | 'occupied' | 'occupied-metallic';
 export type InnerPlacingPointState = 'occupied' | 'non-occupied';
+
+export interface PlacingPoint {
+  id: string;
+  state: OuterPlacingPointState | InnerPlacingPointState;
+  timestamp: string;
+}
 
 export interface OuterPlacingPoint {
   id: string; // O1-O10
@@ -25,12 +32,19 @@ export interface InnerPlacingPoint {
 }
 
 // Linear Actuator Types
-export type ActuatorState = 'moving-forward' | 'moving-backward' | 'idle-forward' | 'idle-backward';
+// Matching schema: DL (Drop Lifter) and LD (Lifter Drop)
+export interface ActuatorStatus {
+  dlPush: boolean;
+  dlPull: boolean;
+  ldPush: boolean;
+  ldPull: boolean;
+  timestamp: string;
+}
 
-export interface LinearActuator {
-  actuator_id: number; // 1 or 2
-  state: ActuatorState;
-  position_mm: number; // 0-100
+export interface StepperStatus {
+  stepperInnerRotate: boolean;
+  stepperOuterRotate: boolean;
+  stepperSpeedSetting: number;
   timestamp: string;
 }
 
@@ -41,8 +55,10 @@ export interface ConveyorState {
   conveyor_id: number; // 1 or 2
   direction: ConveyorDirection;
   angle_deg: number; // 0-360
-  position: number;
-  speed_rpm: number;
+  // Merging new schema fields
+  motorSpeedSensor: number; // D10
+  objectCount: number; // D120 (Inner) or D130 (Outer)
+  is_running: boolean; // Derived from Stepper Status
   timestamp: string;
 }
 
@@ -68,12 +84,18 @@ export const RELAY_MAPPING: Record<number, string> = {
 };
 
 // Sensor Types
-export type SensorType = 'ir' | 'inductive' | 'capacitive';
-export type SensorTriggerState = 'triggered' | 'not-triggered';
+export type BooleanSensorType = 
+  | 'ir' 
+  | 'inductive' 
+  | 'capacitive' 
+  | 'position_inner' 
+  | 'position_outer'
+  | 'stepper_inner'
+  |  'stepper_outer';
 
-export interface SensorStatus {
-  sensor: SensorType;
-  state: SensorTriggerState;
+export interface BooleanSensorStatus {
+  sensor: BooleanSensorType;
+  state: boolean; // mapped from boolean payload
   timestamp: string;
 }
 
@@ -116,17 +138,19 @@ export interface MqttConveyorPayload {
   timestamp: string;
 }
 
-export interface MqttActuatorPayload {
-  actuator_id: number;
-  state: ActuatorState;
-  position_mm: number;
-  timestamp: string;
+export interface MqttActuatorBitPayload {
+  state: boolean;
+  timestamp?: string;
 }
 
-export interface MqttSensorPayload {
-  sensor: SensorType;
-  state: SensorTriggerState;
-  timestamp: string;
+export interface MqttBooleanSensorPayload {
+  state: boolean;
+  timestamp?: string;
+}
+
+export interface MqttNumberPayload {
+  value: number;
+  timestamp?: string;
 }
 
 export interface MqttSystemConfigPayload {

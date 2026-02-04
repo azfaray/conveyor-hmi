@@ -2,12 +2,14 @@
 
 export const APP_CONFIG = {
   // MQTT Configuration based on NODE_ENV
-  MQTT_BROKER_PROD: 'wss://broker.iot.hmmitb.com:8884',
-  MQTT_BROKER_DEV: 'ws://broker.iot.hmmitb.com:1884',
+  MQTT_BROKER_PROD: 'wss://broker.iot.hmmitb.com',
+  MQTT_BROKER_DEV: 'ws://127.0.0.1:1886',
   MQTT_QOS: 1 as const,
   MQTT_KEEP_ALIVE: 60,
   MQTT_CONNECT_TIMEOUT: 30000,
   MQTT_RECONNECT_PERIOD: 1000,
+  
+
   
   // Application Constants
   OUTER_PLACING_POINTS: Array.from({ length: 5 }, (_, i) => `O${i + 1}`),

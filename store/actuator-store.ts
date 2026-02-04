@@ -1,43 +1,41 @@
-// File: src/store/actuator-store.ts
 'use client';
 
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import type { LinearActuator, ActuatorState } from '@/types';
+import type { ActuatorStatus } from '@/types';
 
-interface ActuatorStoreState {
-  actuator_1: LinearActuator;
-  actuator_2: LinearActuator;
-  
-  // Actions
-  update_actuator: (actuator_id: number, data: Partial<LinearActuator>) => void;
-  get_actuator: (actuator_id: number) => LinearActuator;
+interface SingleActuatorState {
+  push: boolean;
+  pull: boolean;
+  timestamp: string;
 }
 
-const create_initial_actuator = (actuator_id: number): LinearActuator => ({
-  actuator_id,
-  state: 'idle-backward' as const,
-  position_mm: 0,
+interface ActuatorStoreState {
+  dl_actuator: SingleActuatorState; // LA1
+  ld_actuator: SingleActuatorState; // LA2
+  
+  // Actions
+  update_actuator_state: (id: 'dl' | 'ld', data: Partial<SingleActuatorState>) => void;
+}
+
+const create_initial_actuator = (): SingleActuatorState => ({
+  push: false,
+  pull: false,
   timestamp: new Date().toISOString(),
 });
 
 export const useActuatorStore = create<ActuatorStoreState>()(
-  subscribeWithSelector((set, get) => ({
-    actuator_1: create_initial_actuator(1),
-    actuator_2: create_initial_actuator(2),
+  subscribeWithSelector((set) => ({
+    dl_actuator: create_initial_actuator(),
+    ld_actuator: create_initial_actuator(),
     
-    update_actuator: (actuator_id: number, data: Partial<LinearActuator>) =>
+    update_actuator_state: (id, data) =>
       set((store) => ({
-        [`actuator_${actuator_id}` as const]: {
-          ...(store[`actuator_${actuator_id}` as keyof ActuatorStoreState] as LinearActuator),
+        [`${id}_actuator` as const]: {
+          ...(store[`${id}_actuator` as keyof ActuatorStoreState]),
           ...data,
           timestamp: new Date().toISOString(),
         },
       })),
-    
-    get_actuator: (actuator_id: number) => {
-      const store = get();
-      return store[`actuator_${actuator_id}` as keyof ActuatorStoreState] as LinearActuator;
-    },
   }))
 );
