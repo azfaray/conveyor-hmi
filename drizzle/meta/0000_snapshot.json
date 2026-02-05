@@ -1,11 +1,11 @@
 {
-  "id": "933b72c1-2707-47f2-8ec0-262e8e9dc449",
+  "id": "cd83c5c0-77ec-47b3-b746-03096d0934f5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.machine_logs": {
-      "name": "machine_logs",
+    "public.conveyor_logs": {
+      "name": "conveyor_logs",
       "schema": "",
       "columns": {
         "id": {
@@ -21,172 +21,110 @@
           "notNull": true,
           "default": "now()"
         },
-        "la1_forward": {
-          "name": "la1_forward",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "la1_backward": {
-          "name": "la1_backward",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "la2_forward": {
-          "name": "la2_forward",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "la2_backward": {
-          "name": "la2_backward",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stepper1_relay": {
-          "name": "stepper1_relay",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stepper2_relay": {
-          "name": "stepper2_relay",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ir_relay": {
-          "name": "ir_relay",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "inductive_relay": {
-          "name": "inductive_relay",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "capacitive_relay": {
-          "name": "capacitive_relay",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
         "ir_sensor": {
           "name": "ir_sensor",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
         "inductive_sensor": {
           "name": "inductive_sensor",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
         "capacitive_sensor": {
           "name": "capacitive_sensor",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
-        "stepper1_rpm": {
-          "name": "stepper1_rpm",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stepper1_pos": {
-          "name": "stepper1_pos",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stepper2_rpm": {
-          "name": "stepper2_rpm",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "stepper2_pos": {
-          "name": "stepper2_pos",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_power_live": {
-          "name": "is_power_live",
+        "position_inner_sensor": {
+          "name": "position_inner_sensor",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
-        "outer_point_1": {
-          "name": "outer_point_1",
-          "type": "point_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outer_point_2": {
-          "name": "outer_point_2",
-          "type": "point_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outer_point_3": {
-          "name": "outer_point_3",
-          "type": "point_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outer_point_4": {
-          "name": "outer_point_4",
-          "type": "point_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outer_point_5": {
-          "name": "outer_point_5",
-          "type": "point_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "inner_point_1_occupied": {
-          "name": "inner_point_1_occupied",
+        "position_outer_sensor": {
+          "name": "position_outer_sensor",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
-        "inner_point_2_occupied": {
-          "name": "inner_point_2_occupied",
+        "motor_speed_sensor": {
+          "name": "motor_speed_sensor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "object_inner_count": {
+          "name": "object_inner_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "object_outer_count": {
+          "name": "object_outer_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "dl_push": {
+          "name": "dl_push",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
-        "inner_point_3_occupied": {
-          "name": "inner_point_3_occupied",
+        "dl_pull": {
+          "name": "dl_pull",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
-        "inner_point_4_occupied": {
-          "name": "inner_point_4_occupied",
+        "ld_push": {
+          "name": "ld_push",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         },
-        "inner_point_5_occupied": {
-          "name": "inner_point_5_occupied",
+        "ld_pull": {
+          "name": "ld_pull",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
+        },
+        "stepper_inner_rotate": {
+          "name": "stepper_inner_rotate",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "stepper_outer_rotate": {
+          "name": "stepper_outer_rotate",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "stepper_speed_setting": {
+          "name": "stepper_speed_setting",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         }
       },
       "indexes": {
@@ -212,94 +150,9 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
-    },
-    "public.stepper_drift_logs": {
-      "name": "stepper_drift_logs",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "motor_id": {
-          "name": "motor_id",
-          "type": "motor_identifier",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "commanded_position": {
-          "name": "commanded_position",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "drift_value": {
-          "name": "drift_value",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "motor_time_idx": {
-          "name": "motor_time_idx",
-          "columns": [
-            {
-              "expression": "motor_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     }
   },
-  "enums": {
-    "public.motor_identifier": {
-      "name": "motor_identifier",
-      "schema": "public",
-      "values": [
-        "stepper_1",
-        "stepper_2"
-      ]
-    },
-    "public.point_state": {
-      "name": "point_state",
-      "schema": "public",
-      "values": [
-        "empty",
-        "occupied",
-        "occupied_metallic"
-      ]
-    }
-  },
+  "enums": {},
   "schemas": {},
   "sequences": {},
   "roles": {},

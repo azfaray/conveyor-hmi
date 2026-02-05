@@ -17,9 +17,9 @@ export function DigitalTwin2D() {
   const sensor_store = useSensorStore();
   const actuator_store = useActuatorStore();
   const conveyor_store = useConveyorStore();
-  // const speed_level = useSystemStore((s) => s.speed_level);
-  // Access the 'motor_speed' variable directly
-  const speed_level = useSensorStore((s) => s.motor_speed); // berubah 
+  const speed_level = useActuatorStore((s) => s.stepper_speed) ?? 0;
+  
+  
 
   // Actuator States
   const la1_state = actuator_store.dl_actuator;
@@ -35,18 +35,15 @@ export function DigitalTwin2D() {
 
   // Data Mapping (Prioritize Store)
   // Use is_running from conveyor store for logic
-  const innerRunning = useSensorStore((s) => s.stepper_inner_sensor.state);
-  const outerRunning = useSensorStore((s) => s.stepper_outer_sensor.state);
+  // Correctly map to your ConveyorStoreState properties
+  const outerRunning = useConveyorStore((s) => s.outer_conveyor.is_running);
+  const innerRunning = useConveyorStore((s) => s.inner_conveyor.is_running);
 
+  const speedMultiplier = speed_level * 10; 
 
-  const speedMultiplier = speed_level * 10; // This gives us the RPM based on level
-
-  // Logic: If running AND speed > 0, use calculated speed, else 0
-  // const outerRpm = outerRunning && speed_level > 0 ? speedMultiplier : 0;
-  // const innerRpm = innerRunning && speed_level > 0 ? speedMultiplier : 0;
-
-  const outerRpm =  outerRunning && speed_level > 0 ? speedMultiplier : 0;
-  const innerRpm =  innerRunning && speed_level > 0 ? speedMultiplier : 0;
+  // 3. Logic: Only spin if Running AND speed is actually set.
+  const outerRpm = outerRunning && speed_level > 0 ? speedMultiplier : 0;
+  const innerRpm = innerRunning && speed_level > 0 ? speedMultiplier : 0;
 
   // --- SYNC POSISI SAAT DIAM ---
   useEffect(() => {
@@ -282,15 +279,22 @@ export function DigitalTwin2D() {
           </div>
         </div>
 
-        {/* Sensor Status List (Inline Visual) */}
+        {/* Sensor & Actuator Status List */}
         <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg border border-gray-300 dark:border-gray-700">
-           <h3 className="font-semibold mb-3 text-gray-700 dark:text-gray-300">Sensor Status</h3>
+           <h3 className="font-semibold mb-3 text-gray-700 dark:text-gray-300">System Status</h3>
            <div className="space-y-2">
               <SensorStatusRow label="IR Sensor" active={relay_ir} />
               <SensorStatusRow label="Inductive" active={relay_inductive} />
               <SensorStatusRow label="Capacitive" active={relay_capacitive} />
-            <SensorStatusRow label="Proximity (Outer)" active={sensor_store.position_outer_sensor.state} />
-            <SensorStatusRow label="Proximity (Inner)" active={sensor_store.position_inner_sensor.state} />
+              <SensorStatusRow label="Proximity (Outer)" active={sensor_store.position_outer_sensor.state} />
+              <SensorStatusRow label="Proximity (Inner)" active={sensor_store.position_inner_sensor.state} />
+              
+              {/* --- ADDED ACTUATORS HERE --- */}
+              <div className="my-2 border-t border-gray-300 dark:border-gray-600"></div>
+              <SensorStatusRow label="DL Piston (Push)" active={la1_state.push} />
+              <SensorStatusRow label="DL Piston (Pull)" active={la1_state.pull} />
+              <SensorStatusRow label="LD Piston (Push)" active={la2_state.push} />
+              <SensorStatusRow label="LD Piston (Pull)" active={la2_state.pull} />
            </div>
         </div>
 

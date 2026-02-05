@@ -15,11 +15,6 @@ export function RelayStatus() {
 
   // Create relay list merging Real-time Store (Priority) with DB Data (Fallback)
   const relayList = [
-    // Actuators (DL/LD)
-    { name: 'DL Push', active: useSensorStore((s) => s.feedback_actuator_dl_push.state) },
-    { name: 'DL Pull', active: useSensorStore((s) => s.feedback_actuator_dl_pull.state) },
-    { name: 'LD Push', active: useSensorStore((s) => s.feedback_actuator_ld_push.state) },
-    { name: 'LD Pull', active: useSensorStore((s) => s.feedback_actuator_ld_pull.state) },
     
     // Steppers
     { name: 'Stepper Inner', active: useSensorStore((s) => s.stepper_inner_sensor.state) },

@@ -82,6 +82,8 @@ export const SUBSCRIBE_TOPICS: string[] = [
 
   MQTT_TOPICS.OBJECT_INNER_COUNT,
   MQTT_TOPICS.OBJECT_OUTER_COUNT,
+  // ... existing topics
+  MQTT_TOPICS.STEPPER_SPEED_OUTPUT, // <--- ADD THIS so speed settings are logged!
 
   //jing
   // MQTT_TOPICS.ACTUATOR_DL_PUSH,
