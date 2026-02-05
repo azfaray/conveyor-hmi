@@ -1,261 +1,191 @@
 'use client';
 
-import { useState } from "react";
-import { getFilteredLogs } from "@/app/actions"; // Cuma panggil Logs biasa
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "../ui/checkbox"; // Relative path (Aman)
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from "recharts";
-import { Calendar, Search, Filter } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
+import { format } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
-// --- 1. DEFINISI SEMUA KOLOM (Sesuai Schema.ts) ---
-
-type FieldType = 'number' | 'boolean' | 'enum';
-
-interface FieldConfig {
-  key: string;
-  label: string;
-  type: FieldType;
-  color: string;
+// Define the shape of your log data from SQLite
+interface LogData {
+  id: number;
+  timestamp: string;
+  system_mode: number;
+  stepper_speed_level: number;
+  count_inner: number;
+  count_outer: number;
+  stepper_inner_running: number;
+  stepper_outer_running: number;
 }
 
-const ALL_FIELDS: FieldConfig[] = [
-  // --- SENSORS (Boolean) ---
-  { key: 'irSensor', label: 'IR Sensor', type: 'boolean', color: '#c2410c' },
-  { key: 'inductiveSensor', label: 'Inductive', type: 'boolean', color: '#be185d' },
-  { key: 'capacitiveSensor', label: 'Capacitive', type: 'boolean', color: '#a16207' },
-  { key: 'positionInnerSensor', label: 'Pos Inner', type: 'boolean', color: '#166534' },
-  { key: 'positionOuterSensor', label: 'Pos Outer', type: 'boolean', color: '#15803d' },
-
-  // --- SENSORS (Numeric) ---
-  { key: 'motorSpeedSensor', label: 'Motor Speed', type: 'number', color: '#2563eb' },
-  { key: 'objectInnerCount', label: 'Count Inn', type: 'number', color: '#7c3aed' },
-  { key: 'objectOuterCount', label: 'Count Out', type: 'number', color: '#a78bfa' },
-
-  // --- ACTUATORS (DL/LD) ---
-  { key: 'dlPush', label: 'DL Push', type: 'boolean', color: '#16a34a' },
-  { key: 'dlPull', label: 'DL Pull', type: 'boolean', color: '#dc2626' },
-  { key: 'ldPush', label: 'LD Push', type: 'boolean', color: '#16a34a' },
-  { key: 'ldPull', label: 'LD Pull', type: 'boolean', color: '#dc2626' },
-
-  // --- STEPPERS ---
-  { key: 'stepperInnerRotate', label: 'Stp Inner', type: 'boolean', color: '#3b82f6' },
-  { key: 'stepperOuterRotate', label: 'Stp Outer', type: 'boolean', color: '#8b5cf6' },
-  { key: 'stepperSpeedSetting', label: 'Stp Speed', type: 'number', color: '#0ea5e9' },
-];
-
 export function DatabaseTab() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState<LogData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter States
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  
-  // Default selected: Motor Speed and Counts
-  const [selectedFields, setSelectedFields] = useState<string[]>(['motorSpeedSensor', 'objectInnerCount']);
-
-  // --- FETCH DATA LOGIC ---
-  const handleSearch = async () => {
-    if (!startDate || !endDate) return alert("Pilih tanggal dulu!");
-    setLoading(true);
-
+  // --- FETCH DATA FROM LOCAL API ---
+  const fetchLogs = async () => {
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      const res = await fetch('/api/logs'); // Calls your local Next.js API
+      const data = await res.json();
       
-      // Cuma panggil Logs biasa
-      const rawData = await getFilteredLogs(start, end);
-
-      // PRE-PROCESSING
-      const processed = rawData.map((item: any) => {
-        const newItem: any = { ...item };
-        
-        // 1. Format Waktu
-        newItem.timeStr = new Date(item.createdAt).toLocaleTimeString('en-GB');
-
-        // 2. Convert Boolean -> Number (Untuk Grafik)
-        ALL_FIELDS.forEach(field => {
-          const val = item[field.key];
-          
-          if (field.type === 'boolean') {
-            newItem[field.key] = val ? 1 : 0;
-          } 
-          // Enum removed from ALL_FIELDS
-        });
-
-        return newItem;
-      });
-
-      setData(processed);
-    } catch (err) {
-      console.error(err);
-    } finally {
+      // Store data directly (API returns newest first)
+      setLogs(data); 
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch logs", error);
       setLoading(false);
     }
   };
 
-  const toggleField = (key: string) => {
-    setSelectedFields(prev => 
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-    );
-  };
+  // Auto-refresh every 2 seconds
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Format data for the chart (Recharts needs Oldest -> Newest)
+  const chartData = [...logs].reverse(); 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
-      {/* 1. FILTER & CONFIG */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold tracking-tight">System History (Offline)</h2>
+        <Button onClick={fetchLogs} variant="outline">
+          Refresh Data
+        </Button>
+      </div>
+
+      {/* --- CHART SECTION --- */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Filter className="w-5 h-5" /> Database Query
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Performance Trends</CardTitle>
+          <CardDescription>
+            Real-time tracking of Speed vs. Production Counts
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          
-          {/* A. Date Range */}
-          <div className="flex flex-wrap items-end gap-4">
-             <div className="space-y-1">
-               <label className="text-xs font-bold text-gray-500">Start Time</label>
-               <input type="datetime-local" className="border p-2 rounded text-sm bg-white dark:bg-slate-900 w-full" 
-                 value={startDate} onChange={e => setStartDate(e.target.value)} />
-             </div>
-             <div className="space-y-1">
-               <label className="text-xs font-bold text-gray-500">End Time</label>
-               <input type="datetime-local" className="border p-2 rounded text-sm bg-white dark:bg-slate-900 w-full" 
-                 value={endDate} onChange={e => setEndDate(e.target.value)} />
-             </div>
-             <Button onClick={handleSearch} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-               {loading ? "Loading..." : <><Search className="w-4 h-4 mr-2" /> Load Data</>}
-             </Button>
-          </div>
+        <CardContent className="h-[350px]">
+          {loading ? (
+            <div className="flex h-full items-center justify-center text-muted-foreground">Loading Graph...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis 
+                  dataKey="timestamp" 
+                  tickFormatter={(str) => format(new Date(str), 'HH:mm:ss')} 
+                  minTickGap={30}
+                  fontSize={12}
+                />
+                <YAxis fontSize={12} />
+                <Tooltip 
+                  labelFormatter={(str) => format(new Date(str), 'HH:mm:ss')}
+                  contentStyle={{ backgroundColor: '#1f2937', color: '#fff', borderRadius: '8px' }}
+                />
+                <Legend />
+                
+                {/* Blue Line: Speed */}
+                <Line 
+                  type="monotone" 
+                  dataKey="stepper_speed_level" 
+                  stroke="#3b82f6" 
+                  name="Motor Speed" 
+                  strokeWidth={2} 
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
+                
+                {/* Green Line: Outer Production Count */}
+                <Line 
+                  type="monotone" 
+                  dataKey="count_outer" 
+                  stroke="#10b981" 
+                  name="Production Count" 
+                  strokeWidth={2} 
+                  dot={false}
+                />
 
-          <hr />
-
-          {/* B. Field Selection (Grid Rapat) */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-               <label className="text-sm font-bold">Pilih Grafik:</label>
-               <button onClick={() => setSelectedFields([])} className="text-xs text-red-500 hover:underline">Uncheck All</button>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {ALL_FIELDS.map((field) => (
-                <div key={field.key} className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded border border-slate-100 dark:border-slate-800">
-                  <Checkbox 
-                    id={field.key} 
-                    checked={selectedFields.includes(field.key)}
-                    onCheckedChange={() => toggleField(field.key)}
-                  />
-                  <label htmlFor={field.key} className="text-[11px] font-medium cursor-pointer flex-1 truncate" title={field.label} style={{ color: field.color }}>
-                    {field.label}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+                {/* Red Step Line: System Mode */}
+                <Line 
+                  type="step" 
+                  dataKey="system_mode" 
+                  stroke="#ef4444" 
+                  name="Mode (1=Man, 0=Auto)" 
+                  strokeWidth={1} 
+                  dot={false} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
-      {/* 2. GRAFIK (CHART) */}
+      {/* --- TABLE SECTION --- */}
       <Card>
-        <CardHeader><CardTitle>Trend Visualization</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Detailed Logs</CardTitle>
+          <CardDescription>
+            Last 100 recorded events (Newest first)
+          </CardDescription>
+        </CardHeader>
         <CardContent>
-          <div className="h-[450px] w-full">
-             {data.length > 0 ? (
-               <ResponsiveContainer width="100%" height="100%">
-                 <LineChart data={data}>
-                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                   <XAxis dataKey="timeStr" fontSize={11} minTickGap={30} />
-                   <YAxis fontSize={11} />
-                   <Tooltip 
-                     contentStyle={{ backgroundColor: '#1e293b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px' }}
-                   />
-                   <Legend />
-                   
-                   {ALL_FIELDS.map((field) => (
-                     selectedFields.includes(field.key) && (
-                       <Line 
-                         key={field.key}
-                         type={field.type === 'number' ? 'monotone' : 'stepAfter'} 
-                         dataKey={field.key} 
-                         name={field.label} 
-                         stroke={field.color} 
-                         strokeWidth={2} 
-                         dot={false}
-                         activeDot={{ r: 4 }}
-                       />
-                     )
-                   ))}
-                 </LineChart>
-               </ResponsiveContainer>
-             ) : (
-               <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed rounded bg-slate-50/50">
-                 <Search className="w-10 h-10 mb-2 opacity-20" />
-                 <span>Belum ada data. Silakan pilih rentang waktu.</span>
-               </div>
-             )}
+          <div className="rounded-md border overflow-hidden">
+            <div className="max-h-[400px] overflow-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Time</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Mode</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Speed</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Running Status</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Counts (In/Out)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log.id} className="border-b transition-colors hover:bg-muted/50">
+                      <td className="p-4 align-middle font-mono">
+                        {format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}
+                      </td>
+                      
+                      {/* LOGIC FIX: 1 = Manual, 0 = Auto */}
+                      <td className="p-4 align-middle">
+                        {log.system_mode === 1 ? (
+                          <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
+                            MANUAL
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+                            AUTO
+                          </Badge>
+                        )}
+                      </td>
+
+                      <td className="p-4 align-middle font-semibold text-blue-600">
+                        Lvl {log.stepper_speed_level}
+                      </td>
+                      <td className="p-4 align-middle">
+                         <div className="flex gap-2">
+                            <span className={log.stepper_inner_running ? "text-green-600 font-bold" : "text-gray-400"}>Inner</span>
+                            <span className="text-gray-300">|</span>
+                            <span className={log.stepper_outer_running ? "text-green-600 font-bold" : "text-gray-400"}>Outer</span>
+                         </div>
+                      </td>
+                      <td className="p-4 align-middle">
+                        {log.count_inner} / {log.count_outer}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* 3. TABEL RAW DATA (LENGKAP SEMUA KOLOM) */}
-      {data.length > 0 && (
-         <Card>
-            <CardHeader>
-               <CardTitle className="flex justify-between items-center">
-                  <span>Raw Data Table</span>
-                  <span className="text-xs font-normal text-gray-500">Showing last {data.length} records</span>
-               </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-[600px] overflow-auto border rounded relative shadow-inner">
-                 <table className="w-full text-xs text-left whitespace-nowrap">
-                    <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10 shadow-sm">
-                       <tr>
-                         <th className="p-3 font-bold border-b min-w-[100px]">Time</th>
-                         {ALL_FIELDS.map(f => (
-                           <th key={f.key} className="p-3 font-bold border-b min-w-[80px]" style={{ color: f.color }}>{f.label}</th>
-                         ))}
-                       </tr>
-                    </thead>
-                    <tbody>
-                       {[...data].reverse().map((row, i) => (
-                         <tr key={i} className="border-b hover:bg-blue-50 dark:hover:bg-slate-900 transition-colors">
-                            <td className="p-2 font-mono text-slate-500 border-r">{row.timeStr}</td>
-                            
-                            {ALL_FIELDS.map(field => {
-                               const val = row[field.key]; // Ini nilai angka (0/1/2) hasil process
-                               
-                               let display = <span className="text-slate-700">{val}</span>;
-
-                               // KITA BALIKIN TAMPILAN TABEL BIAR ENAK DIBACA (BUKAN ANGKA)
-                               if (field.type === 'boolean') {
-                                 display = val === 1 
-                                   ? <span className="inline-block w-2 h-2 rounded-full bg-green-500 mx-auto" title="ON"></span> 
-                                   : <span className="inline-block w-2 h-2 rounded-full bg-slate-200 mx-auto" title="OFF"></span>;
-                               } else if (field.type === 'enum') {
-                                  if(val === 0) display = <span className="text-[10px] text-slate-400">Empty</span>;
-                                  if(val === 1) display = <span className="text-[10px] text-blue-600 font-semibold">Occupied</span>;
-                                  if(val === 2) display = <span className="text-[10px] text-purple-600 font-bold">Metal</span>;
-                               } else {
-                                  // Number / Float
-                                  display = <span>{Number(val).toFixed(1)}</span>
-                               }
-
-                               return <td key={field.key} className="p-2 text-center border-r last:border-r-0 border-slate-100">{display}</td>
-                            })}
-                         </tr>
-                       ))}
-                    </tbody>
-                 </table>
-              </div>
-            </CardContent>
-         </Card>
-      )}
-
     </div>
   );
 }
